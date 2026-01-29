@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tic Tac Toe Simulation - Minimax</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f4f4f4;
+        }
+
+        h2 {
+            margin-top: 20px;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 8px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            font-size: 40px;
+            cursor: pointer;
+            border: none;
+            background: white;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+
+        /* Move animation */
+        .played {
+            transform: scale(1.2);
+            background-color: #dbeafe;
+        }
+
+        /* Winning highlight */
+        .win-human {
+            background-color: #86efac !important;
+        }
+
+        .win-ai {
+            background-color: #fca5a5 !important;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 20px;
+        }
+
+        button.restart {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Tic Tac Toe Simulation</h2>
+<p>Human (X) vs AI (O) — Minimax Algorithm</p>
+
+<div class="board">
+    <button class="cell" onclick="humanMove(0)"></button>
+    <button class="cell" onclick="humanMove(1)"></button>
+    <button class="cell" onclick="humanMove(2)"></button>
+    <button class="cell" onclick="humanMove(3)"></button>
+    <button class="cell" onclick="humanMove(4)"></button>
+    <button class="cell" onclick="humanMove(5)"></button>
+    <button class="cell" onclick="humanMove(6)"></button>
+    <button class="cell" onclick="humanMove(7)"></button>
+    <button class="cell" onclick="humanMove(8)"></button>
+</div>
+
+<div id="status"></div>
+
+<button class="restart" onclick="restartGame()">Restart Simulation</button>
+
+<script>
+    let board = ["", "", "", "", "", "", "", "", ""];
+    let human = "X";
+    let ai = "O";
+    let cells = document.querySelectorAll(".cell");
+
+    const winPatterns = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+    ];
+
+    function humanMove(index) {
+        if (board[index] === "" && !isGameOver()) {
+            placeMove(index, human);
+
+            if (!isGameOver()) {
+                setTimeout(aiMove, 500);
+            }
+        }
+    }
+
+    function aiMove() {
+        let move = bestMove();
+        placeMove(move, ai);
+    }
+
+    function placeMove(index, player) {
+        board[index] = player;
+        cells[index].innerText = player;
+
+        cells[index].classList.add("played");
+        setTimeout(() => cells[index].classList.remove("played"), 300);
+
+        checkGameStatus();
+    }
+
+    function checkGameStatus() {
+        for (let pattern of winPatterns) {
+            if (pattern.every(i => board[i] === human)) {
+                highlight(pattern, "human");
+                endGame("🎉 You Win!");
+                return;
+            }
+            if (pattern.every(i => board[i] === ai)) {
+                highlight(pattern, "ai");
+                endGame("🤖 AI Wins!");
+                return;
+            }
+        }
+
+        if (!board.includes("")) {
+            endGame("🤝 Draw!");
+        }
+    }
+
+    function highlight(pattern, winner) {
+        pattern.forEach(i => {
+            cells[i].classList.add(
+                winner === "human" ? "win-human" : "win-ai"
+            );
+        });
+    }
+
+    function endGame(message) {
+        document.getElementById("status").innerText = message;
+        cells.forEach(cell => cell.disabled = true);
+    }
+
+    function isGameOver() {
+        return document.getElementById("status").innerText !== "";
+    }
+
+    function restartGame() {
+        board = ["", "", "", "", "", "", "", "", ""];
+        cells.forEach(cell => {
+            cell.innerText = "";
+            cell.disabled = false;
+            cell.className = "cell";
+        });
+        document.getElementById("status").innerText = "";
+    }
+
+    // =====================
+    // MINIMAX ALGORITHM
+    // =====================
+    function minimax(newBoard, isMaximizing) {
+        if (checkWin(newBoard, ai)) return 10;
+        if (checkWin(newBoard, human)) return -10;
+        if (!newBoard.includes("")) return 0;
+
+        if (isMaximizing) {
+            let best = -Infinity;
+            for (let i = 0; i < 9; i++) {
+                if (newBoard[i] === "") {
+                    newBoard[i] = ai;
+                    best = Math.max(best, minimax(newBoard, false));
+                    newBoard[i] = "";
+                }
+            }
+            return best;
+        } else {
+            let best = Infinity;
+            for (let i = 0; i < 9; i++) {
+                if (newBoard[i] === "") {
+                    newBoard[i] = human;
+                    best = Math.min(best, minimax(newBoard, true));
+                    newBoard[i] = "";
+                }
+            }
+            return best;
+        }
+    }
+
+    function bestMove() {
+        let bestScore = -Infinity;
+        let move;
+
+        for (let i = 0; i < 9; i++) {
+            if (board[i] === "") {
+                board[i] = ai;
+                let score = minimax(board, false);
+                board[i] = "";
+                if (score > bestScore) {
+                    bestScore = score;
+                    move = i;
+                }
+            }
+        }
+        return move;
+    }
+
+    function checkWin(board, player) {
+        return winPatterns.some(pattern =>
+            pattern.every(i => board[i] === player)
+        );
+    }
+</script>
+
+</body>
+</html>
